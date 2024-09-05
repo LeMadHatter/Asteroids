@@ -1,6 +1,7 @@
 from circleshape import *
 from constants import *
 from shot import *
+import sys
 
 class Player(CircleShape):
     def __init__(self, x, y, radius):
@@ -39,6 +40,8 @@ class Player(CircleShape):
             self.move(-dt, keys[pygame.K_LCTRL])
         if keys[pygame.K_r]:
             self.position = pygame.Vector2(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
+        if keys[pygame.K_ESCAPE]:
+            sys.exit("Game closed by human")
         if keys[pygame.K_SPACE]:
             self.shoot()
         if keys[pygame.K_i]:

@@ -36,6 +36,10 @@ def main():
         for asteroid in asteroids:
             if asteroid.is_colliding(player) and not player.invicibility:
                 sys.exit("GAME OVER NOOB!")
+            for shot in shots:
+                if asteroid.is_colliding(shot):
+                    asteroid.split()
+                    shot.kill()
         for item in drawable:
             item.draw(screen)
 
