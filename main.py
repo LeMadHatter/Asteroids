@@ -5,6 +5,7 @@ from asteroids import *
 from asteroidfield import *
 from shot import *
 from menu import *
+from modifier import *
 import sys
 import os
 
@@ -26,12 +27,14 @@ def main():
     asteroids = pygame.sprite.Group()
     shots = pygame.sprite.Group()
     menu = pygame.sprite.Group()
+    modifiers = pygame.sprite.Group()
 
     Player.containers = (updatable, drawable)
     Asteroid.containers = (updatable, drawable, asteroids)
     AsteroidField.containers = (updatable)
     Shot.containers = (shots, updatable, drawable)
     Button.containers = (menu, updatable, drawable)
+    Modifier.containers = (updatable, drawable, modifiers)
 
     asteroid_field = AsteroidField()
     new_game_button = Button('New Game', "#FFFFFF", SCREEN_WIDTH / 8, SCREEN_HEIGHT / 6, 2)
@@ -39,10 +42,12 @@ def main():
     game_over_button = Button('Game Over!', (255, 0, 0), SCREEN_WIDTH / 2 - BUTTON_WIDTH / 2, SCREEN_HEIGHT / 2 - BUTTON_HEIGHT / 2, 0, "#000000", float('-inf'))
     player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, PLAYER_RADIUS)
     
-    
     while True:
         pygame.display.flip()
         screen.fill("#000000")
+
+        if len(modifiers.sprites()) > AVAILABLE_MODIFIERS_LIMIT:
+            modifiers.sprites()[0].kill()
 
         if new_game_button.is_clicked(pygame.Vector2(pygame.mouse.get_pos())):
             player.reset_player()
@@ -52,6 +57,9 @@ def main():
 
         if quit_button.is_clicked(pygame.Vector2(pygame.mouse.get_pos())):
             sys.exit()
+
+        if game_state == "Start Menu":
+            player.invicibility = True
 
         for asteroid in asteroids:
             if asteroid.is_colliding(player) and not player.invicibility:
@@ -65,9 +73,16 @@ def main():
             for shot in shots:
                 if asteroid.is_colliding(shot):
                     asteroid.split()
-                    shot.kill()
+                    if not player.active_modifier == "Piercing shot":
+                        shot.kill()
                     if game_state == "Game":
                         player.score.update(10)
+
+        for modifier in modifiers:
+            if modifier.is_colliding(player):
+                player.active_modifier = modifier.type
+                player.modifier_timer = MODIFIER_TIMER[modifier.type]
+                modifier.kill()
 
         for item in updatable:
             if game_over_button.fade_timer < 0 and game_state == "Game Over":

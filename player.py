@@ -19,6 +19,9 @@ class Player(CircleShape):
         self.update_extra_lives = True
         self.font = pygame.font.SysFont('Comic Sans MS', 30)
         self.score = Score()
+        self.active_modifier = None
+        self.modifier_timer = MODIFIER_TIMER
+        self.shot_timer_modifier = 0
 
     # in the player class
     def triangle(self):
@@ -30,6 +33,11 @@ class Player(CircleShape):
         return [a, b, c]
     
     def draw(self, screen):
+        if not self.lost_life:
+            if self.active_modifier:
+                self.color = MODIFIER_COLORS[self.active_modifier]
+            else:
+                self.color = "#FFFFFF"
         pygame.draw.polygon(screen, self.color, self.triangle(), 2)
         self.score.draw(screen)
         if self.update_extra_lives:
@@ -41,6 +49,8 @@ class Player(CircleShape):
         self.rotation = self.rotation % 360
 
     def update(self, dt):
+        if self.active_modifier:
+            self.apply_modifier(dt)
         keys = pygame.key.get_pressed()
         
         if keys[pygame.K_a]:
@@ -70,39 +80,46 @@ class Player(CircleShape):
         self.key_timer -= dt
         self.shot_timer -= dt
         
+        
 
     def move(self, dt, sprint):
-        if not self.lost_life:
-            if sprint:
-                dt *= 5
-            forward = pygame.Vector2(0, 1).rotate(self.rotation)
+        if sprint:
+            dt *= 5
+        forward = pygame.Vector2(0, 1).rotate(self.rotation)
 
-            if (self.position.x + forward.x * PLAYER_SPEED * dt > SCREEN_WIDTH 
-                or self.position.x + forward.x * PLAYER_SPEED * dt < 0):
-                forward = pygame.Vector2(0, pygame.Vector2(0, 1).rotate(self.rotation).y)
+        if (self.position.x + forward.x * PLAYER_SPEED * dt > SCREEN_WIDTH 
+            or self.position.x + forward.x * PLAYER_SPEED * dt < 0):
+            forward = pygame.Vector2(0, pygame.Vector2(0, 1).rotate(self.rotation).y)
 
-            if (self.position.y + forward.y * PLAYER_SPEED * dt > SCREEN_HEIGHT
-                or self.position.y + forward.y * PLAYER_SPEED * dt < 0):
-                forward = pygame.Vector2(pygame.Vector2(0,1).rotate(self.rotation).x, 0)      
+        if (self.position.y + forward.y * PLAYER_SPEED * dt > SCREEN_HEIGHT
+            or self.position.y + forward.y * PLAYER_SPEED * dt < 0):
+            forward = pygame.Vector2(pygame.Vector2(0,1).rotate(self.rotation).x, 0)      
 
-            if (self.position.x + forward.x * PLAYER_SPEED * dt > SCREEN_WIDTH 
-                or self.position.x + forward.x * PLAYER_SPEED * dt < 0):
-                forward.x = 0
+        if (self.position.x + forward.x * PLAYER_SPEED * dt > SCREEN_WIDTH 
+            or self.position.x + forward.x * PLAYER_SPEED * dt < 0):
+            forward.x = 0
 
-            if (self.position.y + forward.y * PLAYER_SPEED * dt > SCREEN_HEIGHT
-                or self.position.y + forward.y * PLAYER_SPEED * dt < 0):
-                forward.y = 0
+        if (self.position.y + forward.y * PLAYER_SPEED * dt > SCREEN_HEIGHT
+            or self.position.y + forward.y * PLAYER_SPEED * dt < 0):
+            forward.y = 0
 
-            self.position += forward * PLAYER_SPEED * dt
+        self.position += forward * PLAYER_SPEED * dt
     
 
     def shoot(self):
         if not self.lost_life:
             if self.shot_timer > 0:
                 return
-            self.shot_timer = PLAYER_SHOOT_COOLDOWN
-            new_shot = Shot(self.position.x, self.position.y, SHOT_RADIUS)
-            new_shot.velocity = pygame.Vector2(0, 1).rotate(self.rotation) * PLAYER_SHOOT_SPEED
+            self.shot_timer = PLAYER_SHOOT_COOLDOWN - self.shot_timer_modifier
+            if self.active_modifier == "Multi shot":
+                new_shot1 = Shot(self.position.x, self.position.y, SHOT_RADIUS)
+                new_shot1.velocity = pygame.Vector2(0, 1).rotate(self.rotation - 22.5) * PLAYER_SHOOT_SPEED
+
+                new_shot2 = Shot(self.position.x, self.position.y, SHOT_RADIUS)
+                new_shot2.velocity = pygame.Vector2(0, 1).rotate(self.rotation + 22.5) * PLAYER_SHOOT_SPEED
+            else:
+                new_shot = Shot(self.position.x, self.position.y, SHOT_RADIUS)
+                new_shot.velocity = pygame.Vector2(0, 1).rotate(self.rotation) * PLAYER_SHOOT_SPEED
         
     def reset_player(self):
         self.position = pygame.Vector2(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
@@ -134,3 +151,24 @@ class Player(CircleShape):
             self.color = "#FFFFFF"
         if not self.lost_life:
             self.extra_lives -= 1
+
+    def apply_modifier(self, dt):
+        if self.active_modifier:
+            self.modifier_timer -= dt
+            if self.modifier_timer < 0:
+                self.active_modifier = None
+                self.modifier_timer = 5
+
+
+        if self.active_modifier == "Invincibility":
+            self.invicibility = True
+            return
+        else:
+            self.invicibility = False
+
+        if self.active_modifier == "Att speed":
+
+            self.shot_timer_modifier = 0.15
+            return
+        else:
+            self.shot_timer_modifier = 0

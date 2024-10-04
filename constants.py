@@ -20,4 +20,10 @@ BUTTON_WIDTH =  240
 BUTTON_HEIGHT = 60
 BUTTON_SPACING = 100
 
+MODIFIER_COLORS = {"Att speed" : '#FF8000', "Invincibility" : '#00FF00', "Multi shot" : '#FF00FF', "Piercing shot" : '#FFFF00'}
+MODIFIER_TYPES = ["Att speed", "Invincibility", "Multi shot", "Piercing shot"]
+MODIFIER_TIMER = {"Att speed" : 8, "Invincibility" : 4, "Multi shot" : 8, "Piercing shot" : 8}
+MODIFIER_SPAWN_RATE = 8
+AVAILABLE_MODIFIERS_LIMIT = 4
+
 
